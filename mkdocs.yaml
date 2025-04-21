@@ -1,18 +1,14 @@
-site_name: GitOps with ArgoCD Workshop
-repo_name: saiyam1814/gitex-workshop
-repo_url: https://github.com/saiyam1814/gitex-workshop
-site_dir: site
-
+site_name: Gitex Asia 2025 - GitOps with ArgoCD
 theme:
   name: material
   palette:
     scheme: default
-    primary: blue
-    accent: cyan
-
+    primary: indigo
+    accent: amber
+  features:
+    - content.code.copy
 nav:
   - Home: index.md
-  - Outline: outline.md
-
-plugins:
-  - search
+repo_url: https://github.com/saiyam1814/gitex-workshop
+repo_name: saiyam1814/gitex-workshop
+site_dir: site

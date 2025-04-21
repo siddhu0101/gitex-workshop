@@ -3,46 +3,33 @@ package main
 import (
 	"embed"
 	"html/template"
-	"log"
 	"net/http"
-	"os"
+
+	"github.com/labstack/echo/v4"
 )
 
 //go:embed templates/*
-var tmplFS embed.FS
+var templatesFS embed.FS
 
 //go:embed static/*
 var staticFS embed.FS
 
 func main() {
-	addr := getEnv("PORT", "8080")
+	e := echo.New()
 
-	// parse templates at startup (panic if invalid)
-	tmpl := template.Must(template.ParseFS(tmplFS, "templates/index.html"))
+	// Serve static files
+	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", http.FileServer(http.FS(staticFS)))))
 
-	// serve static assets
-	http.Handle("/static/", http.FileServer(http.FS(staticFS)))
-
-	// main page
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		data := struct{ Title string }{
-			Title: "Welcome to the Gitex Asia Workshop — Multi‑Tenancy Powered by Loft Labs",
+	// Serve the index page
+	e.GET("/", func(c echo.Context) error {
+		tmpl := template.Must(template.ParseFS(templatesFS, "templates/index.html"))
+		data := struct{ Title, Message string }{
+			Title:   "Gitex Asia 2025: GitOps with ArgoCD",
+			Message: "Welcome to our hands-on workshop! Deployed via ArgoCD on KodeKloud.",
 		}
-		if err := tmpl.Execute(w, data); err != nil {
-			log.Printf("template execute error: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-		}
+		return tmpl.Execute(c.Response().Writer, data)
 	})
 
-	log.Printf("Starting server on %s…", addr)
-	if err := http.ListenAndServe(":"+addr, nil); err != nil {
-		log.Fatalf("could not start server: %v", err)
-	}
-}
-
-func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
+	// Start server
+	e.Logger.Fatal(e.Start(":8080"))
 }
