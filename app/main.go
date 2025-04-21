@@ -3,23 +3,46 @@ package main
 import (
 	"embed"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
 )
 
 //go:embed templates/*
-var templatesFS embed.FS
+var tmplFS embed.FS
 
 //go:embed static/*
 var staticFS embed.FS
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFS(templatesFS, "templates/index.html"))
-	data := struct{ Title string }{Title: "Welcome to the Multi-Tenancy March Series Powered by Loft Labs"}
-	tmpl.Execute(w, data)
+func main() {
+	addr := getEnv("PORT", "8080")
+
+	// parse templates at startup (panic if invalid)
+	tmpl := template.Must(template.ParseFS(tmplFS, "templates/index.html"))
+
+	// serve static assets
+	http.Handle("/static/", http.FileServer(http.FS(staticFS)))
+
+	// main page
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		data := struct{ Title string }{
+			Title: "Welcome to the Gitex Asia Workshop — Multi‑Tenancy Powered by Loft Labs",
+		}
+		if err := tmpl.Execute(w, data); err != nil {
+			log.Printf("template execute error: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+	})
+
+	log.Printf("Starting server on %s…", addr)
+	if err := http.ListenAndServe(":"+addr, nil); err != nil {
+		log.Fatalf("could not start server: %v", err)
+	}
 }
 
-func main() {
-	http.HandleFunc("/", handler)
-	http.Handle("/static/", http.FileServer(http.FS(staticFS)))
-	http.ListenAndServe(":8080", nil)
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }

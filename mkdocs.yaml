@@ -1,16 +1,18 @@
-site_name: Ephemeral PR environments using vCluster
+site_name: GitOps with ArgoCD Workshop
+repo_name: saiyam1814/gitex-workshop
+repo_url: https://github.com/saiyam1814/gitex-workshop
+site_dir: site
+
 theme:
   name: material
   palette:
     scheme: default
     primary: blue
     accent: cyan
+
 nav:
   - Home: index.md
-  - Quickstart: QUICKSTART.md
+  - Outline: outline.md
 
-repo_url: https://github.com/LoftLabs-Experiments/workshop-ephemeral-PR
-repo_name: LoftLabs-Experiments/workshop-ephemeral-PR
-
-site_dir: site
-
+plugins:
+  - search
