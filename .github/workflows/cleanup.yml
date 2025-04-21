@@ -1,0 +1,61 @@
+name: Clean Up vCluster
+
+on:
+  pull_request:
+    types: [closed, unlabeled]
+
+jobs:
+  cleanup:
+    if: (github.event.action == 'closed' && github.event.pull_request.merged == true) || (github.event.action == 'unlabeled' && github.event.label.name == 'test')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # Step 1: Checkout Main Branch
+      - name: Checkout Main Branch
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          token: ${{ secrets.PAT_TOKEN }}
+
+      # Step 2: Update deployment.yaml in Main
+      - name: Update deployment.yaml in Main
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: |
+          git config --global user.email "your-email@example.com"
+          git config --global user.name "Your Name"
+          FEATURE_BRANCH="feature-test-${{ github.event.pull_request.head.sha }}"
+          echo "Current branch:"
+          git branch --show-current
+          echo "Fetching feature branch: $FEATURE_BRANCH"
+          git fetch origin $FEATURE_BRANCH
+          echo "Checking out deploy/deployment.yaml from origin/$FEATURE_BRANCH"
+          git checkout origin/$FEATURE_BRANCH -- deploy/deployment.yaml
+          echo "Adding and committing changes"
+          git add deploy/deployment.yaml
+          git commit -m "Add or update deployment.yaml from PR #${{ github.event.pull_request.number }}" || echo "No changes to commit"
+          echo "Pushing changes to main"
+          git push origin main
+
+      # Step 3: Delete Feature Branch
+      - name: Delete Feature Branch
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: |
+          FEATURE_BRANCH="feature-test-${{ github.event.pull_request.head.sha }}"
+          git push origin --delete $FEATURE_BRANCH
+
+      # Step 4: Install vCluster CLI
+      - name: Install vCluster CLI
+        uses: loft-sh/setup-vcluster@main
+        with:
+          url: ${{ secrets.VCLUSTER_PLATFORM_URL }}
+          access-key: ${{ secrets.VCLUSTER_ACCESS_KEY }}
+
+      # Step 5: Delete vCluster
+      - name: Delete vCluster
+        env:
+          NAME: pr-${{ github.event.pull_request.number }}
+        run: |
+          vcluster platform delete vcluster $NAME --project default 
