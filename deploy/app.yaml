@@ -1,30 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: workshop-app
+  name: gitex-app
+  namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: workshop-app
+      app: gitex-app
   template:
     metadata:
       labels:
-        app: workshop-app
+        app: gitex-app
     spec:
       containers:
-      - name: workshop-app
-        image: ghcr.io/loftlabs-experiments/workshop-ephemeral-pr/workshop-ephemeral-pr-d605cb2ec9d7e4baa0184a9d1f448322@sha256:2ea5d2b203663963774382f83647f735a55a37bc3049a0fc35c63aefd5dc1a4c
+      - name: gitex-app
+        image: ghcr.io/saiyam1814/gitex-workshop/gitex-workshop-f79fa0363b1c51659713a33d69e513bd@sha256:177c274b59ac6cb6f4d474849a5278dc60acf666c5cc6c639c8442384204a21c
         ports:
         - containerPort: 8080
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: workshop-service
+  name: gitex-service
+  namespace: default
 spec:
   selector:
-    app: workshop-app
+    app: gitex-app
   ports:
   - protocol: TCP
     port: 80
@@ -33,20 +42,20 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: example-ingress
+  name: gitex-ingress
   namespace: default
   annotations:
-    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-  - host: pr10.vcluster.tech
+  - host: gitex-demo.local
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: workshop-service
+            name: gitex-service
             port:
               number: 80
