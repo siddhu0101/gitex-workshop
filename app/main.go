@@ -25,7 +25,7 @@ func main() {
 		tmpl := template.Must(template.ParseFS(templatesFS, "templates/index.html"))
 		data := struct{ Title, Message string }{
 			Title:   "Gitex Asia 2025: GitOps with ArgoCD",
-			Message: "Welcome to our hands-on workshop! Deployed via ArgoCD on KodeKloud.",
+			Message: "Welcome to our hands-on workshop! Deployed via ArgoCD on Killercoda.",
 		}
 		return tmpl.Execute(c.Response().Writer, data)
 	})
